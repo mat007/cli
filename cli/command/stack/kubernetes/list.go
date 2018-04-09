@@ -17,7 +17,7 @@ func RunList(dockerCli *KubeCli, opts options.List) error {
 	}
 	format := opts.Format
 	if len(format) == 0 {
-		format = formatter.TableFormatKey
+		format = formatter.KubernetesStackTableFormat
 	}
 	stackCtx := formatter.Context{
 		Output: dockerCli.Out(),
@@ -51,6 +51,7 @@ func getStacks(kubeCli *KubeCli) ([]*formatter.Stack, error) {
 			Name:         stack.name,
 			Services:     len(stack.getServices()),
 			Orchestrator: "Kubernetes",
+			Namespace:    stack.namespace,
 		})
 	}
 	return formattedStacks, nil

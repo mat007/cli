@@ -25,7 +25,7 @@ func RunList(dockerCli command.Cli, opts options.List) error {
 	}
 	format := opts.Format
 	if len(format) == 0 {
-		format = formatter.TableFormatKey
+		format = formatter.SwarmStackTableFormat
 	}
 	stackCtx := formatter.Context{
 		Output: dockerCli.Out(),
