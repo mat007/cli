@@ -44,6 +44,9 @@ func runList(cmd *cobra.Command, dockerCli command.Cli, opts options.List) error
 		stacks = append(stacks, ss...)
 	}
 	if dockerCli.ClientInfo().HasKubernetes() {
+		if dockerCli.ClientInfo().HasAll() && !cmd.Flags().Changed("namespace") {
+			opts.AllNamespaces = true
+		}
 		kli, err := kubernetes.WrapCli(dockerCli, kubernetes.NewOptions(cmd.Flags()))
 		if err != nil {
 			return err
