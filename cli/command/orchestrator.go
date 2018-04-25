@@ -13,6 +13,8 @@ const (
 	OrchestratorKubernetes = Orchestrator("kubernetes")
 	// OrchestratorSwarm orchestrator
 	OrchestratorSwarm = Orchestrator("swarm")
+	// OrchestratorAll orchestrator
+	OrchestratorAll   = Orchestrator("all")
 	orchestratorUnset = Orchestrator("unset")
 
 	defaultOrchestrator      = OrchestratorSwarm
@@ -25,6 +27,8 @@ func normalize(flag string) Orchestrator {
 		return OrchestratorKubernetes
 	case "swarm":
 		return OrchestratorSwarm
+	case "all":
+		return OrchestratorAll
 	default:
 		return orchestratorUnset
 	}
@@ -52,7 +56,7 @@ func GetOrchestrator(isExperimental bool, flagValue, value string) Orchestrator 
 	}
 
 	if value != "" {
-		fmt.Fprintf(os.Stderr, "Specified orchestrator %q is invalid. Please use either kubernetes or swarm\n", value)
+		fmt.Fprintf(os.Stderr, "Specified orchestrator %q is invalid. Please use either kubernetes, swarm or all\n", value)
 	}
 	// Nothing set, use default orchestrator
 	return defaultOrchestrator
