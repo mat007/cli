@@ -27,10 +27,12 @@ type Options struct {
 }
 
 // NewOptions returns an Options initialized with command line flags
-func NewOptions(flags *flag.FlagSet) Options {
+func NewOptions(flags *flag.FlagSet, namespace ...string) Options {
 	var opts Options
-	if namespace, err := flags.GetString("namespace"); err == nil {
-		opts.Namespace = namespace
+	if len(namespace) > 0 {
+		opts.Namespace = namespace[0]
+	} else if nm, err := flags.GetString("namespace"); err == nil {
+		opts.Namespace = nm
 	}
 	if kubeConfig, err := flags.GetString("kubeconfig"); err == nil {
 		opts.Config = kubeConfig
@@ -38,9 +40,15 @@ func NewOptions(flags *flag.FlagSet) Options {
 	return opts
 }
 
+// AddNamespaceFlag adds the namespace flag to the given flag set
+func AddNamespaceFlag(flags *flag.FlagSet) {
+	flags.String("namespace", "default", "Kubernetes namespace to use")
+	flags.SetAnnotation("namespace", "kubernetes", nil)
+	flags.SetAnnotation("namespace", "experimentalCLI", nil)
+}
+
 // WrapCli wraps command.Cli with kubernetes specifics
 func WrapCli(dockerCli command.Cli, opts Options) (*KubeCli, error) {
-	var err error
 	cli := &KubeCli{
 		Cli: dockerCli,
 	}
