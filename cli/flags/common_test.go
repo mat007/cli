@@ -13,7 +13,7 @@ import (
 func TestCommonOptionsInstallFlags(t *testing.T) {
 	flags := pflag.NewFlagSet("testing", pflag.ContinueOnError)
 	opts := NewCommonOptions()
-	opts.InstallFlags(flags)
+	opts.InstallFlags(flags, flags)
 
 	err := flags.Parse([]string{
 		"--tlscacert=\"/foo/cafile\"",
@@ -33,7 +33,7 @@ func defaultPath(filename string) string {
 func TestCommonOptionsInstallFlagsWithDefaults(t *testing.T) {
 	flags := pflag.NewFlagSet("testing", pflag.ContinueOnError)
 	opts := NewCommonOptions()
-	opts.InstallFlags(flags)
+	opts.InstallFlags(flags, flags)
 
 	err := flags.Parse([]string{})
 	assert.NilError(t, err)
