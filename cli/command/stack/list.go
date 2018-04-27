@@ -10,6 +10,7 @@ import (
 	"github.com/docker/cli/cli/command/stack/options"
 	"github.com/docker/cli/cli/command/stack/swarm"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 	"vbom.ml/util/sortorder"
 )
 
@@ -47,29 +48,68 @@ func runList(cmd *cobra.Command, dockerCli command.Cli, opts options.List) error
 		stacks = append(stacks, ss...)
 	}
 	if dockerCli.ClientInfo().HasKubernetes() {
-		if dockerCli.ClientInfo().HasAll() && !cmd.Flags().Changed("namespace") {
+		flags := cmd.Flags()
+		if dockerCli.ClientInfo().HasAll() && !flags.Changed("namespace") {
 			opts.AllNamespaces = true
 		}
 		if opts.AllNamespaces {
-			ss, err := getStacks(dockerCli, opts, kubernetes.NewOptions(cmd.Flags()))
+			ss, err := getStacks(dockerCli, opts, kubernetes.NewOptions(flags))
 			if err != nil {
 				return err
 			}
 			stacks = append(stacks, ss...)
 		} else {
-			mnms, err := getNamespaces(cmd)
+			ss, err := getStacksWithNamespaces(dockerCli, opts, flags)
 			if err != nil {
 				return err
 			}
-			for nm := range mnms {
-				ss, err := getStacks(dockerCli, opts, kubernetes.NewOptions(cmd.Flags(), nm))
-				if err != nil {
-					return err
-				}
-				stacks = append(stacks, ss...)
-			}
+			stacks = append(stacks, ss...)
 		}
 	}
+	return format(dockerCli, opts, stacks)
+}
+
+func getStacksWithNamespaces(dockerCli command.Cli, opts options.List, flags *pflag.FlagSet) ([]*formatter.Stack, error) {
+	mnms, err := getNamespaces(flags)
+	if err != nil {
+		return nil, err
+	}
+	stacks := []*formatter.Stack{}
+	for nm := range mnms {
+		ss, err := getStacks(dockerCli, opts, kubernetes.NewOptions(flags, nm))
+		if err != nil {
+			return nil, err
+		}
+		stacks = append(stacks, ss...)
+	}
+	return stacks, nil
+}
+
+func getStacks(dockerCli command.Cli, opts options.List, kopts kubernetes.Options) ([]*formatter.Stack, error) {
+	kli, err := kubernetes.WrapCli(dockerCli, kopts)
+	if err != nil {
+		return nil, err
+	}
+	ss, err := kubernetes.GetStacks(kli, opts)
+	if err != nil {
+		return nil, err
+	}
+	return ss, nil
+}
+
+func getNamespaces(flags *pflag.FlagSet) (map[string]struct{}, error) {
+	nms, err := flags.GetStringSlice("namespace")
+	if err != nil {
+		return nil, err
+	}
+	mnms := map[string]struct{}{}
+	for _, nm := range nms {
+		mnms[nm] = struct{}{}
+	}
+	return mnms, nil
+}
+
+func format(dockerCli command.Cli, opts options.List, stacks []*formatter.Stack) error {
 	var format string
 	switch {
 	case opts.Format != "":
@@ -87,28 +127,4 @@ func runList(cmd *cobra.Command, dockerCli command.Cli, opts options.List) error
 		return sortorder.NaturalLess(stacks[i].Name, stacks[j].Name)
 	})
 	return formatter.StackWrite(stackCtx, stacks)
-}
-
-func getStacks(dockerCli command.Cli, opts options.List, kopts kubernetes.Options) ([]*formatter.Stack, error) {
-	kli, err := kubernetes.WrapCli(dockerCli, kopts)
-	if err != nil {
-		return nil, err
-	}
-	ss, err := kubernetes.GetStacks(kli, opts)
-	if err != nil {
-		return nil, err
-	}
-	return ss, nil
-}
-
-func getNamespaces(cmd *cobra.Command) (map[string]struct{}, error) {
-	nms, err := cmd.Flags().GetStringSlice("namespace")
-	if err != nil {
-		return nil, err
-	}
-	mnms := map[string]struct{}{}
-	for _, nm := range nms {
-		mnms[nm] = struct{}{}
-	}
-	return mnms, nil
 }

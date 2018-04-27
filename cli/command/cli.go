@@ -171,6 +171,7 @@ func (cli *DockerCli) Initialize(opts *cliflags.ClientOptions) error {
 		DefaultVersion:  cli.client.ClientVersion(),
 		HasExperimental: hasExperimental,
 		Orchestrator:    orchestrator,
+		TLSOptions:      opts.Common.TLSOptions,
 	}
 	cli.initializeFromClient()
 	return nil
@@ -237,6 +238,7 @@ type ClientInfo struct {
 	HasExperimental bool
 	DefaultVersion  string
 	Orchestrator    Orchestrator
+	TLSOptions      *tlsconfig.Options
 }
 
 // HasKubernetes checks if kubernetes orchestrator is enabled
