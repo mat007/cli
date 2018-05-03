@@ -38,7 +38,7 @@ func fakeServerVersion(_ context.Context) (types.Version, error) {
 }
 
 func TestVersionWithOrchestrator(t *testing.T) {
-	cli := test.NewFakeCli(&fakeClient{serverVersion: fakeServerVersion}, test.OrchestratorSwarm)
+	cli := test.NewFakeCli(&fakeClient{serverVersion: fakeServerVersion}).WithOrchestratorSwarm()
 	cmd := NewVersionCommand(cli)
 	assert.NilError(t, cmd.Execute())
 	assert.Check(t, is.Contains(cleanTabs(cli.OutBuffer().String()), "Orchestrator: swarm"))

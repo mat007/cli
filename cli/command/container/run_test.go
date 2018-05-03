@@ -62,7 +62,7 @@ func TestRunCommandWithContentTrustErrors(t *testing.T) {
 			) (container.ContainerCreateCreatedBody, error) {
 				return container.ContainerCreateCreatedBody{}, fmt.Errorf("shouldn't try to pull image")
 			},
-		}, test.EnableContentTrust)
+		}).EnableContentTrust()
 		cli.SetNotaryClient(tc.notaryFunc)
 		cmd := NewRunCommand(cli)
 		cmd.SetArgs(tc.args)

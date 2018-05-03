@@ -156,7 +156,7 @@ func TestNewCreateCommandWithContentTrustErrors(t *testing.T) {
 			) (container.ContainerCreateCreatedBody, error) {
 				return container.ContainerCreateCreatedBody{}, fmt.Errorf("shouldn't try to pull image")
 			},
-		}, test.EnableContentTrust)
+		}).EnableContentTrust()
 		cli.SetNotaryClient(tc.notaryFunc)
 		cmd := NewCreateCommand(cli)
 		cmd.SetOutput(ioutil.Discard)

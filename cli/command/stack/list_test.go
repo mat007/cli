@@ -48,7 +48,7 @@ func TestListErrors(t *testing.T) {
 	for _, tc := range testCases {
 		cmd := newListCommand(test.NewFakeCli(&fakeClient{
 			serviceListFunc: tc.serviceListFunc,
-		}, test.OrchestratorSwarm))
+		}).WithOrchestratorSwarm())
 		cmd.SetArgs(tc.args)
 		cmd.SetOutput(ioutil.Discard)
 		for key, value := range tc.flags {
@@ -69,7 +69,7 @@ func TestListWithFormat(t *testing.T) {
 						}),
 					)}, nil
 			},
-		}, test.OrchestratorSwarm)
+		}).WithOrchestratorSwarm()
 	cmd := newListCommand(cli)
 	cmd.Flags().Set("format", "{{ .Name }}")
 	assert.NilError(t, cmd.Execute())
@@ -86,7 +86,7 @@ func TestListWithoutFormat(t *testing.T) {
 					}),
 				)}, nil
 		},
-	}, test.OrchestratorSwarm)
+	}).WithOrchestratorSwarm()
 	cmd := newListCommand(cli)
 	assert.NilError(t, cmd.Execute())
 	golden.Assert(t, cli.OutBuffer().String(), "stack-list-without-format.golden")
@@ -139,7 +139,7 @@ func TestListOrder(t *testing.T) {
 			serviceListFunc: func(options types.ServiceListOptions) ([]swarm.Service, error) {
 				return uc.swarmServices, nil
 			},
-		}, test.OrchestratorSwarm)
+		}).WithOrchestratorSwarm()
 		cmd := newListCommand(cli)
 		assert.NilError(t, cmd.Execute())
 		golden.Assert(t, cli.OutBuffer().String(), uc.golden)

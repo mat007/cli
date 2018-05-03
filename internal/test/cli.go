@@ -38,7 +38,7 @@ type FakeCli struct {
 }
 
 // NewFakeCli returns a fake for the command.Cli interface
-func NewFakeCli(client client.APIClient, opts ...func(*FakeCli)) *FakeCli {
+func NewFakeCli(client client.APIClient) *FakeCli {
 	outBuffer := new(bytes.Buffer)
 	errBuffer := new(bytes.Buffer)
 	c := &FakeCli{
@@ -50,9 +50,6 @@ func NewFakeCli(client client.APIClient, opts ...func(*FakeCli)) *FakeCli {
 		// Use an empty string for filename so that tests don't create configfiles
 		// Set cli.ConfigFile().Filename to a tempfile to support Save.
 		configfile: configfile.New(""),
-	}
-	for _, opt := range opts {
-		opt(c)
 	}
 	return c
 }
@@ -110,11 +107,6 @@ func (c *FakeCli) ClientInfo() command.ClientInfo {
 	return c.DockerCli.ClientInfo()
 }
 
-// SetClientInfo sets the internal getter for retrieving a ClientInfo
-func (c *FakeCli) SetClientInfo(clientInfoFunc clientInfoFuncType) {
-	c.clientInfoFunc = clientInfoFunc
-}
-
 // OutBuffer returns the stdout buffer
 func (c *FakeCli) OutBuffer() *bytes.Buffer {
 	return c.outBuffer
@@ -164,21 +156,13 @@ func (c *FakeCli) ContentTrustEnabled() bool {
 }
 
 // EnableContentTrust on the fake cli
-func EnableContentTrust(c *FakeCli) {
+func (c *FakeCli) EnableContentTrust() *FakeCli {
 	c.contentTrust = true
+	return c
 }
 
-// OrchestratorSwarm sets a command.ClientInfo with Swarm orchestrator
-func OrchestratorSwarm(c *FakeCli) {
-	c.SetClientInfo(func() command.ClientInfo { return command.ClientInfo{Orchestrator: "swarm"} })
-}
-
-// OrchestratorKubernetes sets a command.ClientInfo with Kubernetes orchestrator
-func OrchestratorKubernetes(c *FakeCli) {
-	c.SetClientInfo(func() command.ClientInfo { return command.ClientInfo{Orchestrator: "kubernetes"} })
-}
-
-// OrchestratorAll sets a command.ClientInfo with all orchestrator
-func OrchestratorAll(c *FakeCli) {
-	c.SetClientInfo(func() command.ClientInfo { return command.ClientInfo{Orchestrator: "all"} })
+// WithOrchestratorSwarm sets a command.ClientInfo with Swarm orchestrator
+func (c *FakeCli) WithOrchestratorSwarm() *FakeCli {
+	c.clientInfoFunc = func() command.ClientInfo { return command.ClientInfo{Orchestrator: "swarm"} }
+	return c
 }
