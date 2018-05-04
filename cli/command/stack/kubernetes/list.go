@@ -1,8 +1,10 @@
 package kubernetes
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -10,7 +12,6 @@ import (
 	"github.com/docker/cli/cli/command"
 	"github.com/docker/cli/cli/command/formatter"
 	"github.com/docker/cli/cli/command/stack/options"
-	"github.com/docker/go-connections/tlsconfig"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
@@ -114,42 +115,19 @@ func getUserVisibleNamespaces(dockerCli command.Cli) (*core_v1.NamespaceList, er
 	if err != nil {
 		return nil, err
 	}
-	endpoint.Scheme = "https"
-	endpoint.Path = "/kubernetesNamespaces"
 	res := core_v1.NamespaceList{}
-	return &res, makeRequest(dockerCli, *endpoint, func(resp http.Response) error {
-		body, err := ioutil.ReadAll(resp.Body)
+	err = dockerCli.Client().CustomRequest(context.Background(), "GET", "https", endpoint.Host, "/kubernetesNamespaces", nil, nil, nil, func(statusCode int, body io.Reader) error {
+		bytes, err := ioutil.ReadAll(body)
 		if err != nil {
-			return errors.Wrapf(err, "received %d status and unable to read response", resp.StatusCode)
+			return errors.Wrapf(err, "received %d status and unable to read response", statusCode)
 		}
-		if resp.StatusCode != http.StatusOK {
-			return fmt.Errorf(string(body))
+		if statusCode != http.StatusOK {
+			return fmt.Errorf(string(bytes))
 		}
-		if err := json.Unmarshal(body, &res); err != nil {
-			return errors.Wrapf(err, "unmarshal failed: %s", string(body))
+		if err := json.Unmarshal(bytes, &res); err != nil {
+			return errors.Wrapf(err, "unmarshal failed: %s", string(bytes))
 		}
 		return nil
 	})
-}
-
-func makeRequest(dockerCli command.Cli, endpoint url.URL, handler func(resp http.Response) error) error {
-	tlsOptions := dockerCli.ClientInfo().TLSOptions
-	if tlsOptions == nil {
-		return fmt.Errorf("missing TLS options for https")
-	}
-	tlsConfig, err := tlsconfig.Client(*tlsOptions)
-	if err != nil {
-		return err
-	}
-	httpClient := http.Client{
-		Transport: &http.Transport{
-			TLSClientConfig: tlsConfig,
-		},
-	}
-	resp, err := httpClient.Get(endpoint.String())
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-	return handler(*resp)
+	return &res, err
 }

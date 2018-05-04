@@ -126,6 +126,27 @@ func (cli *Client) sendRequest(ctx context.Context, method, path string, query u
 	return resp, cli.checkResponseErr(resp)
 }
 
+func (cli *Client) CustomRequest(ctx context.Context, method, scheme, host, path string, query map[string][]string, body io.Reader, headers map[string][]string, handler func(statusCode int, body io.Reader) error) error {
+	url := url.URL{
+		Host:     host,
+		Scheme:   scheme,
+		Path:     path,
+		RawQuery: url.Values(query).Encode(),
+	}
+	req, err := cli.buildRequest(method, url.String(), body, headers)
+	if err != nil {
+		return err
+	}
+	resp, err := cli.doRequest(ctx, req)
+	if err != nil {
+		return err
+	}
+	if resp.body != nil {
+		defer resp.body.Close()
+	}
+	return handler(resp.statusCode, resp.body)
+}
+
 func (cli *Client) doRequest(ctx context.Context, req *http.Request) (serverResponse, error) {
 	serverResp := serverResponse{statusCode: -1, reqURL: req.URL}
 

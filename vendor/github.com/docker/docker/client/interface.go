@@ -31,6 +31,7 @@ type CommonAPIClient interface {
 	SecretAPIClient
 	SystemAPIClient
 	VolumeAPIClient
+	CustomAPIClient
 	ClientVersion() string
 	DaemonHost() string
 	ServerVersion(ctx context.Context) (types.Version, error)
@@ -192,4 +193,9 @@ type ConfigAPIClient interface {
 	ConfigRemove(ctx context.Context, id string) error
 	ConfigInspectWithRaw(ctx context.Context, name string) (swarm.Config, []byte, error)
 	ConfigUpdate(ctx context.Context, id string, version swarm.Version, config swarm.ConfigSpec) error
+}
+
+// CustomAPIClient defines API client methods for custom queries
+type CustomAPIClient interface {
+	CustomRequest(ctx context.Context, method, scheme, host, path string, query map[string][]string, body io.Reader, headers map[string][]string, handler func(statusCode int, body io.Reader) error) error
 }
